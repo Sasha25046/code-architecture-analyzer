@@ -121,6 +121,20 @@ public partial class Foo
 }
 """;
 
+    public const string StaticConstructorAssignment = """
+public class Foo
+{
+    static Foo()
+    {
+        Instance = new Foo();
+    }
+
+    private Foo() { }
+
+    public static Foo Instance { get; }
+}
+""";
+
     // ---------- Негативні приклади ----------
 
     public const string PublicConstructor = """
@@ -200,6 +214,30 @@ public class Foo
     private Foo() { }
 
     public static Foo Create() => new Foo();
+}
+""";
+
+    public const string AutoPropertyWithoutInitializer = """
+public class Foo
+{
+    private Foo() { }
+
+    public static Foo Instance { get; set; }
+}
+""";
+
+    public const string ReturnsNewDespiteStorageReference = """
+public class Foo
+{
+    private static Foo _instance;
+
+    private Foo() { }
+
+    public static Foo Create()
+    {
+        _instance = new Foo();
+        return new Foo();
+    }
 }
 """;
 

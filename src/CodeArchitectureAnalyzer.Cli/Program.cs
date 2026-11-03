@@ -47,29 +47,35 @@ else
 var compilation = CompilationFactory.Create(trees);
 var results = CodeAnalyzer.CreateDefault().Analyze(compilation);
 
-Console.WriteLine("=== АНАЛІЗАТОР ШАБЛОНІВ ПРОЄКТУВАННЯ ===");
-Console.WriteLine($"Файлів: {trees.Count}\n");
-
-foreach (var result in results.Where(r => showAll || r.IsMatch))
-{
-    var status = result.IsMatch ? "[ШАБЛОН ЗНАЙДЕНО]" : "[НІ]";
-    Console.WriteLine($"{status} {result.PatternName}: {result.TypeName}");
-    Console.WriteLine($"      {result.FilePath}:{result.Line}");
-    foreach (var condition in result.Conditions)
-    {
-        var mark = condition.Passed ? "+" : "-";
-        Console.WriteLine($"      [{mark}] {condition.Id}. {condition.Description}: {condition.Explanation}");
-    }
-    Console.WriteLine(new string('-', 60));
-}
-
 var found = results.Count(r => r.IsMatch);
-Console.WriteLine($"Перевірено типів: {results.Count}. Виявлено шаблонів: {found}.");
 
 if (markdownPath is not null)
 {
+    // Передано --md: звіт зберігається у файл.
     File.WriteAllText(markdownPath, MarkdownReportWriter.Write(results, showAll));
+    Console.WriteLine($"Перевірено типів: {results.Count}. Виявлено шаблонів: {found}.");
     Console.WriteLine($"Звіт збережено: {markdownPath}");
+}
+else
+{
+    // Без --md: докладний вивід у консоль.
+    Console.WriteLine("=== АНАЛІЗАТОР ШАБЛОНІВ ПРОЄКТУВАННЯ ===");
+    Console.WriteLine($"Файлів: {trees.Count}\n");
+
+    foreach (var result in results.Where(r => showAll || r.IsMatch))
+    {
+        var status = result.IsMatch ? "[ШАБЛОН ЗНАЙДЕНО]" : "[НІ]";
+        Console.WriteLine($"{status} {result.PatternName}: {result.TypeName}");
+        Console.WriteLine($"      {result.FilePath}:{result.Line}");
+        foreach (var condition in result.Conditions)
+        {
+            var mark = condition.Passed ? "+" : "-";
+            Console.WriteLine($"      [{mark}] {condition.Id}. {condition.Description}: {condition.Explanation}");
+        }
+        Console.WriteLine(new string('-', 60));
+    }
+
+    Console.WriteLine($"Перевірено типів: {results.Count}. Виявлено шаблонів: {found}.");
 }
 
 return 0;

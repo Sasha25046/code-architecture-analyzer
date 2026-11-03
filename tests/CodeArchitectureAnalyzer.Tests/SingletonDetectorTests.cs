@@ -12,6 +12,7 @@ public class SingletonDetectorTests
     [InlineData(Samples.AutoProperty)]
     [InlineData(Samples.PublicField)]
     [InlineData(Samples.NullableAnnotated)]
+    [InlineData(Samples.StaticConstructorAssignment)]
     public void Singleton_variants_are_detected(string code)
     {
         var result = TestHelper.Find(TestHelper.Detect(code), "Foo");
@@ -63,6 +64,17 @@ public class SingletonDetectorTests
     public void Factory_that_ignores_storage_is_rejected_by_c4_only()
     {
         var result = TestHelper.Find(TestHelper.Detect(Samples.FactoryWithoutStorage), "Foo");
+
+        Assert.False(result.IsMatch);
+        Assert.Equal(new[] { "C4" }, TestHelper.FailedIds(result));
+    }
+
+    [Theory]
+    [InlineData(Samples.AutoPropertyWithoutInitializer)]
+    [InlineData(Samples.ReturnsNewDespiteStorageReference)]
+    public void Accessor_that_does_not_return_stored_instance_is_rejected_by_c4_only(string code)
+    {
+        var result = TestHelper.Find(TestHelper.Detect(code), "Foo");
 
         Assert.False(result.IsMatch);
         Assert.Equal(new[] { "C4" }, TestHelper.FailedIds(result));
