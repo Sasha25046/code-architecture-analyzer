@@ -5,10 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CodeArchitectureAnalyzer.Core.Detectors;
 
-/// <summary>
-/// Детектор шаблону Одинак (Singleton). Працює із символами семантичної моделі,
-/// а не з текстовими назвами типів. Усі умови обчислюються незалежно, щоб результат можна було пояснити.
-/// </summary>
+
 public sealed class SingletonDetector : IPatternDetector
 {
     private const string Name = "Singleton";
@@ -17,7 +14,6 @@ public sealed class SingletonDetector : IPatternDetector
 
     public IEnumerable<DetectionResult> Detect(Compilation compilation)
     {
-        // Для partial-класів символ типу єдиний, тому результат формується один раз.
         var visited = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
         foreach (var tree in compilation.SyntaxTrees)
@@ -122,17 +118,13 @@ public sealed class SingletonDetector : IPatternDetector
             return true;
         }
 
-        // Lazy<TClass>: поширена форма потокобезпечної відкладеної ініціалізації.
         return candidate is INamedTypeSymbol { IsGenericType: true } generic
                && generic.TypeArguments.Length == 1
                && generic.OriginalDefinition.ToDisplayString() == "System.Lazy<T>"
                && Same(generic.TypeArguments[0], type);
     }
 
-    /// <summary>
-    /// Умова C4 (2.5): а) вираз повернення члена звертається до сховища, або
-    /// б) сам член є сховищем, ініціалізованим створенням екземпляра чи присвоєним у статичному конструкторі.
-    /// </summary>
+   
     private static bool ReturnsStoredInstance(
         Compilation compilation, INamedTypeSymbol type, ISymbol accessor, IReadOnlyCollection<ISymbol> storage)
     {
@@ -169,7 +161,6 @@ public sealed class SingletonDetector : IPatternDetector
         return false;
     }
 
-    /// <summary>Вирази повернення: оператор return, вираз-тіло методу чи властивості, вираз-тіло акцесора get.</summary>
     private static IEnumerable<ExpressionSyntax> ReturnedExpressions(SyntaxNode declaration)
     {
         foreach (var node in declaration.DescendantNodesAndSelf())
@@ -206,7 +197,6 @@ public sealed class SingletonDetector : IPatternDetector
             }
         }
 
-        // Присвоєння в статичному конструкторі.
         foreach (var constructor in type.StaticConstructors)
         {
             foreach (var reference in constructor.DeclaringSyntaxReferences)
@@ -234,10 +224,13 @@ public sealed class SingletonDetector : IPatternDetector
     {
         foreach (var node in expression.DescendantNodesAndSelf())
         {
-            if (node is ObjectCreationExpressionSyntax or ImplicitObjectCreationExpressionSyntax
-                && Same(model.GetTypeInfo(node).Type, type))
+            if (node is ObjectCreationExpressionSyntax or ImplicitObjectCreationExpressionSyntax)
             {
-                return true;
+                var info = model.GetTypeInfo(node);
+                if (Same(info.Type ?? info.ConvertedType, type))
+                {
+                    return true;
+                }
             }
         }
 
