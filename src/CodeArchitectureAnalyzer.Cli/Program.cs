@@ -44,16 +44,22 @@ else
     }
 }
 
+static void PrintSummary(IReadOnlyList<DetectionResult> results)
+{
+    foreach (var group in results.GroupBy(r => r.PatternName))
+    {
+        Console.WriteLine($"{group.Key}: перевірено {group.Count()}, виявлено {group.Count(r => r.IsMatch)}.");
+    }
+}
+
 var compilation = CompilationFactory.Create(trees);
 var results = CodeAnalyzer.CreateDefault().Analyze(compilation);
-
-var found = results.Count(r => r.IsMatch);
 
 if (markdownPath is not null)
 {
     // Передано --md: звіт зберігається у файл.
     File.WriteAllText(markdownPath, MarkdownReportWriter.Write(results, showAll));
-    Console.WriteLine($"Перевірено типів: {results.Count}. Виявлено шаблонів: {found}.");
+    PrintSummary(results);
     Console.WriteLine($"Звіт збережено: {markdownPath}");
 }
 else
@@ -75,7 +81,7 @@ else
         Console.WriteLine(new string('-', 60));
     }
 
-    Console.WriteLine($"Перевірено типів: {results.Count}. Виявлено шаблонів: {found}.");
+    PrintSummary(results);
 }
 
 return 0;

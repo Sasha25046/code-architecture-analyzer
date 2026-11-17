@@ -9,12 +9,14 @@ public static class MarkdownReportWriter
     public static string Write(IReadOnlyList<DetectionResult> results, bool includeNonMatches = false)
     {
         var matches = results.Where(r => r.IsMatch).ToList();
-        var checkedTypes = results.Select(r => r.TypeName).Distinct().Count();
         var sb = new StringBuilder();
 
         sb.AppendLine("# Звіт аналізатора шаблонів проєктування");
         sb.AppendLine();
-        sb.AppendLine($"Перевірено типів: {checkedTypes}. Виявлено шаблонів: {matches.Count}.");
+        foreach (var group in results.GroupBy(r => r.PatternName))
+        {
+            sb.AppendLine($"- {group.Key}: перевірено {group.Count()}, виявлено {group.Count(r => r.IsMatch)}.");
+        }
         sb.AppendLine();
 
         if (matches.Count > 0)

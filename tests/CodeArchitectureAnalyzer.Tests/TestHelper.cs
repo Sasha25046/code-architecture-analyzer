@@ -6,14 +6,22 @@ namespace CodeArchitectureAnalyzer.Tests;
 
 internal static class TestHelper
 {
-    public static IReadOnlyList<DetectionResult> Detect(params string[] sources)
+    public static IReadOnlyList<DetectionResult> Detect(params string[] sources) =>
+        DetectWith(new SingletonDetector(), sources);
+
+    public static IReadOnlyList<DetectionResult> DetectWith(IPatternDetector detector, params string[] sources)
+    {
+        var compilation = Compile(sources);
+        return detector.Detect(compilation).ToList();
+    }
+
+    public static CSharpCompilation Compile(params string[] sources)
     {
         var trees = sources
             .Select((code, index) => CSharpSyntaxTree.ParseText(code, path: $"Test{index}.cs"))
             .ToList();
 
-        var compilation = CompilationFactory.Create(trees);
-        return new SingletonDetector().Detect(compilation).ToList();
+        return CompilationFactory.Create(trees);
     }
 
     public static DetectionResult Find(IReadOnlyList<DetectionResult> results, string typeName) =>
