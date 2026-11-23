@@ -12,7 +12,15 @@ public sealed class CodeAnalyzer
     public CodeAnalyzer(IEnumerable<IPatternDetector> detectors) => _detectors = detectors.ToList();
 
     public static CodeAnalyzer CreateDefault() =>
-        new(new IPatternDetector[] { new SingletonDetector(), new FactoryMethodDetector(), new BrainMethodDetector() });
+        new(new IPatternDetector[]
+        {
+            new SingletonDetector(),
+            new FactoryMethodDetector(),
+            new StrategyDetector(),
+            new GodClassDetector(),
+            new FeatureEnvyDetector(),
+            new BrainMethodDetector(),
+        });
 
     public IReadOnlyList<DetectionResult> Analyze(Compilation compilation) =>
         _detectors.SelectMany(detector => detector.Detect(compilation)).ToList();
